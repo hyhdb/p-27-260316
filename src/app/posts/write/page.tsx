@@ -18,12 +18,24 @@ export default function Write() {
             return;
         }
 
+        if (title.value.length >= 10 || title.value.length < 2) {
+            alert("2글자 이상 10자 미만으로 작성해주세요");
+            title.focus();
+            return;
+        }
+
         if (content.value.length === 0) {
             alert("내용을 입력해주세요.");
             content.focus();
             return;
         }
 
+        if (content.value.length >= 100 || content.value.length < 2) {
+            alert("2글자 이상 100자 미만으로 작성해주세요");
+            content.focus();
+            return;
+        }
+        
         // db에 저장.
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/posts`, {
             method: "POST",
