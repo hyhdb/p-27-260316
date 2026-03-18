@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PostDto } from "@/type/post";
+import { PostCommentDto, PostDto } from "@/type/post";
 import { fetchApi } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +10,8 @@ import Link from "next/link";
 export default function Detail() {
 
     const [post, setPost] = useState<PostDto | null>(null);
+    const [postComments, setPostComments] = useState<PostCommentDto[]>
+        ([]);
     const { id } = useParams();
     const router = useRouter();
 
@@ -18,7 +20,9 @@ export default function Detail() {
         fetchApi(`/api/v1/posts/${id}`)
             .then(data => setPost(data));
 
-            
+        fetchApi(`/api/v1/posts/${id}/comments`)
+            .then(setPostComments);
+
     }, []);
 
     const onDeleteHandler = (id: number) => {
@@ -45,15 +49,28 @@ export default function Detail() {
                     </div>
                     <div className="flex gap-4">
                         <Link
-                            href="#"
+                            href={`/posts/${post.id}/edit`}
                             className="border-1 rounded p-2 bg-blue-500">
-                                수정</Link>
+                            수정</Link>
                         <button
                             onClick={() => {
                                 onDeleteHandler(post.id);
                             }}
                             className="border-1 rounded p-2 bg-red-500">삭제</button>
                     </div>
+                    <h2 className="p-2">댓글 목록</h2>
+
+                    {postComments.length === 0 && <div>댓글이 없습니다.</div>}
+
+                    {postComments.length > 0 && (
+                        <ul>
+                            {postComments.map((postComment) => (
+                                <li key={postComment.id}>
+                                    {postComment.id} : {postComment.content}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             }
         </>
