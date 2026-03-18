@@ -11,15 +11,20 @@ export default function Detail() {
 
     const [post, setPost] = useState<PostDto | null>(null);
     const [postComments, setPostComments] = useState<PostCommentDto[] | null>
-        (null);
+        (null);        
+    const [isError, setIsError] = useState(false);
     const { id: postId } = useParams();
     const router = useRouter();
 
     useEffect(() => {
 
         fetchApi(`/api/v1/posts/${postId}`)
-            .then(data => setPost(data));
-
+        .then(data => setPost(data))
+        .catch((e) => {
+            console.log(e);
+            setIsError(true);
+        })
+        
         fetchApi(`/api/v1/posts/${postId}/comments`)
             .then(setPostComments);
 
@@ -39,20 +44,19 @@ export default function Detail() {
 
     const deletePostComment = (commentId: number) => {
         fetchApi(`/api/v1/posts/${postId}/comments/${commentId}`, {
-          method: "DELETE",
+            method: "DELETE",
         }).then((data) => {
-          alert(data.msg);
+            alert(data.msg);
 
-          if (postComments === null) return;
+            if (postComments === null) return;
 
-          // 리렌더링을 위한 댓글 배열 교체 필요
-          setPostComments(
-            postComments.filter((postComment) => postComment.id !== commentId)
-          );
+            setPostComments(
+                postComments.filter((postComment) => postComment.id !== commentId)
+            );
         });
-      };
-    
+    };
 
+    if (isError) return <div>문제 발생</div>
     return (
         <>
             {post === null
@@ -80,22 +84,22 @@ export default function Detail() {
                     {postComments !== null && postComments.length === 0 && (
                         <div>댓글이 없습니다.</div>
                     )}
-                    
+
                     {postComments !== null && postComments.length > 0 && (
                         <ul className="flex flex-col gap-2">
                             {postComments.map((postComment) => (
                                 <li key={postComment.id} className="flex gap-2 items-center">
-                                <span>{postComment.id} : </span>
-                                <span>{postComment.content}</span>
-                                <button className="border-2 p-2 rounded">수정</button>
-                                <button
-                                  className="border-2 p-2 rounded"
-                                  onClick={() => {
-                                    deletePostComment(postComment.id);
-                                  }}
-                                >
-                                  삭제
-                                </button>
+                                    <span>{postComment.id} : </span>
+                                    <span>{postComment.content}</span>
+                                    <button className="border-2 p-2 rounded">수정</button>
+                                    <button
+                                        className="border-2 p-2 rounded"
+                                        onClick={() => {
+                                            deletePostComment(postComment.id);
+                                        }}
+                                    >
+                                        삭제
+                                    </button>
                                 </li>
                             ))}
                         </ul>
