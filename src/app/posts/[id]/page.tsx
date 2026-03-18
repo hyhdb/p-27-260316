@@ -56,6 +56,54 @@ export default function Detail() {
         });
     };
 
+    const onModifySuccess = (id: number, contentValue: string) => {
+        if (postComments === null) return;
+
+        // 1
+        // fetchApi(`/api/v1/posts/${postId}/comments`)
+        //     .then((rs) => {
+        //         console.log(rs);
+        //         setPostComments(rs);
+        //     })
+
+        // 2
+        setPostComments(
+            postComments.map((postComment) =>
+                postComment.id === id
+                    ? { ...postComment, content: contentValue }
+                    : postComment
+            )
+        );
+    };
+
+    const handleAddPostComment = (e: any) => {
+        const form = e.target;
+        const contentInput = form.content;
+        const contentValue = contentInput.value;
+
+        if (contentValue.length === 0) {
+            alert("내용을 입력해주세요.");
+            contentInput.focus();
+            return;
+        }
+
+        if (contentValue.length < 2) {
+            alert("내용은 2자 이상 입력해주세요.");
+            contentInput.focus();
+            return;
+        }
+
+        fetchApi(`/api/v1/posts/${postId}/comments`, {
+            method: "POST",
+            body: JSON.stringify({ content: contentValue }),
+        }).then((data) => {
+            alert(data.msg);
+
+            if (postComments === null) return;
+            setPostComments([...postComments, data.data.commentDto]);
+        });
+    };
+
     if (isError) return <div>문제 발생</div>
     return (
         <>
@@ -82,17 +130,34 @@ export default function Detail() {
                         postId={post.id}
                         postComments={postComments}
                         deletePostComment={deletePostComment}
+                        onModifySuccess={onModifySuccess}
                     />
+
+                    <form
+                        className="flex gap-2 items-center"
+                        onSubmit={handleAddPostComment}
+                    >
+                        <textarea
+                            rows={5}
+                            name="content"
+                            className="border-2 p-2 rounded"
+                            maxLength={100}
+                        />
+                        <button type="submit" className="border-2 p-2 rounded">
+                            저장
+                        </button>
+                    </form>
                 </div>
             }
         </>
     )
 }
 
-function PostCommentList({ postId, postComments, deletePostComment }: {
+function PostCommentList({ postId, postComments, deletePostComment, onModifySuccess }: {
     postId: number,
     postComments: PostCommentDto[] | null,
-    deletePostComment: (commentId: number) => void
+    deletePostComment: (commentId: number) => void,
+    onModifySuccess: (commentId: number, content: string) => void
 }) {
     return (
         <>
@@ -111,6 +176,7 @@ function PostCommentList({ postId, postComments, deletePostComment }: {
                             postId={postId}
                             postComment={postComment}
                             deletePostComment={deletePostComment}
+                            onModifySuccess={onModifySuccess}
                         />
                     ))}
                 </ul>
@@ -119,10 +185,11 @@ function PostCommentList({ postId, postComments, deletePostComment }: {
     )
 }
 
-function PostCommentListItem({ postId, postComment, deletePostComment }: {
+function PostCommentListItem({ postId, postComment, deletePostComment, onModifySuccess }: {
     postId: number,
     postComment: PostCommentDto,
-    deletePostComment: (commentId: number) => void
+    deletePostComment: (commentId: number) => void,
+    onModifySuccess: (commentId: number, content: string) => void
 }) {
 
     const [modifyMode, setModifyMode] = useState(false);
@@ -143,6 +210,14 @@ function PostCommentListItem({ postId, postComment, deletePostComment }: {
         }).then((data) => {
             alert(data.msg);
             toggleModifyMode();
+            // 1번 방식 댓글 목록을 다시 가져온다.
+            //  - 장: 데이터 정합성.
+            //  - 단: 성능
+            // 2번 방식 리액트 상태값을 변경
+            //  - 장: 빠르게 적용
+            //  - 단: db와 ui 상태가 일치 하지 않을 수 있음.
+
+            onModifySuccess(postComment.id, contentValue);
         });
     };
 
